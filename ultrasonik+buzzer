@@ -1,0 +1,54 @@
+#define BLYNK_TEMPLATE_ID "TMPLxxxxxx"
+#define BLYNK_DEVICE_NAME "Parking Sensor"
+#define BLYNK_AUTH_TOKEN "Token_Blynk_Kamu"
+
+#include <ESP8266WiFi.h>
+#include <BlynkSimpleEsp8266.h>
+
+char ssid[] = "Nama_WiFi";
+char pass[] = "Password_WiFi";
+
+const int trigPin = 5;
+const int echoPin = 4;
+const int buzzerPin = 14;
+
+BlynkTimer timer;
+
+void checkSensor() {
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  long duration = pulseIn(echoPin, HIGH);
+  int distance = duration * 0.034 / 2;
+
+  Blynk.virtualWrite(V0, distance); // Kirim jarak ke Blynk
+
+  // Logika Alarm
+  if (distance > 0 && distance < 20) {
+    tone(buzzerPin, 1000); // Bunyi terus
+    delay(100);
+  } else if (distance >= 20 && distance < 50) {
+    tone(buzzerPin, 1000); // Bunyi putus-putus
+    delay(200);
+    noTone(buzzerPin);
+    delay(200);
+  } else {
+    noTone(buzzerPin); // Diam
+  }
+}
+
+void setup() {
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  pinMode(buzzerPin, OUTPUT);
+  Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass);
+  timer.setInterval(500L, checkSensor);
+}
+
+void loop() {
+  Blynk.run();
+  timer.run();
+}
