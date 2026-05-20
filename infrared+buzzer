@@ -1,0 +1,58 @@
+#define BLYNK_TEMPLATE_ID "TMPLxxxx"
+#define BLYNK_TEMPLATE_NAME "Infrared Buzzer"
+#define BLYNK_AUTH_TOKEN "IsiAuthToken"
+
+#include <ESP8266WiFi.h>
+#include <BlynkSimpleEsp8266.h>
+
+char ssid[] = "NamaWifi";
+char pass[] = "PasswordWifi";
+
+#define IR_PIN D5
+#define BUZZER_PIN D6
+
+BlynkTimer timer;
+
+void checkSensor() {
+
+  int sensorValue = digitalRead(IR_PIN);
+
+  Serial.print("Status Sensor: ");
+  Serial.println(sensorValue);
+
+  Blynk.virtualWrite(V0, sensorValue);
+
+  if (sensorValue == LOW) {
+
+    digitalWrite(BUZZER_PIN, HIGH);
+
+    Blynk.virtualWrite(V1, "Objek Terdeteksi");
+
+    Serial.println("Buzzer ON");
+  }
+
+  else {
+
+    digitalWrite(BUZZER_PIN, LOW);
+
+    Blynk.virtualWrite(V1, "Tidak Ada Objek");
+
+    Serial.println("Buzzer OFF");
+  }
+}
+void setup() {
+  Serial.begin(115200);
+  pinMode(IR_PIN, INPUT);
+
+  pinMode(BUZZER_PIN, OUTPUT);
+
+  Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass);
+
+  timer.setInterval(1000L, checkSensor);
+}
+
+void loop() {
+
+  Blynk.run();
+  timer.run();
+}
