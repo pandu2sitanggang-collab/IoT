@@ -1,0 +1,65 @@
+#define BLYNK_TEMPLATE_ID "TMPLxxxxxx"
+#define BLYNK_DEVICE_NAME "Smart Alarm"
+#define BLYNK_AUTH_TOKEN "Token_Blynk_Kamu"
+
+#define BLYNK_PRINT Serial
+
+#include <ESP8266WiFi.h>
+#include <BlynkSimpleEsp8266.h>
+
+char ssid[] = "Nama_WiFi";
+char pass[] = "Password_WiFi";
+
+const int mqPin = A0;       // Pin Analog untuk Sensor MQ
+const int buzzerPin = 14;   // Pin D5 pada NodeMCU
+
+BlynkTimer timer;
+
+// Tentukan batas nilai gas di mana alarm akan berbunyi
+const int batasGas = 400; 
+
+void checkGasLevel() {
+  // Membaca nilai analog dari sensor MQ (0 - 1024)
+  int gasValue = analogRead(mqPin); 
+
+  // Kirim data ke aplikasi Blynk
+  Blynk.virtualWrite(V0, gasValue);
+  
+  Serial.print("Kadar Gas/Asap: ");
+  Serial.println(gasValue);
+
+  // Logika Alarm Buzzer
+  if (gasValue > batasGas) { 
+    // Jika gas melewati batas, bunyikan buzzer di frekuensi 1000 Hz
+    tone(buzzerPin, 1000); 
+    
+    // Kirim sinyal 1 ke Blynk (bisa dihubungkan ke widget LED)
+    Blynk.virtualWrite(V1, 1); 
+    Serial.println("ALARM: Gas Terdeteksi!");
+  } else {
+    // Jika udara normal, matikan buzzer
+    noTone(buzzerPin); 
+    
+    // Kirim sinyal 0 ke Blynk
+    Blynk.virtualWrite(V1, 0); 
+  }
+}
+
+void setup() {
+  Serial.begin(115200);
+  
+  // Setup pin buzzer sebagai output
+  pinMode(buzzerPin, OUTPUT);
+  noTone(buzzerPin); // Pastikan mati di awal
+
+  // Mulai koneksi ke Blynk
+  Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass);
+
+  // Baca sensor setiap 1 detik
+  timer.setInterval(1000L, checkGasLevel);
+}
+
+void loop() {
+  Blynk.run();
+  timer.run();
+}
