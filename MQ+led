@@ -1,0 +1,40 @@
+#define BLYNK_TEMPLATE_ID "TMPLxxxxxx"
+#define BLYNK_DEVICE_NAME "Gas Indicator"
+#define BLYNK_AUTH_TOKEN "Token_Blynk_Kamu"
+
+#include <ESP8266WiFi.h>
+#include <BlynkSimpleEsp8266.h>
+
+char ssid[] = "Nama_WiFi";
+char pass[] = "Password_WiFi";
+
+const int mqPin = A0;      
+const int ledPin = 14;     // Pin D5
+
+BlynkTimer timer;
+const int batasGas = 400; 
+
+void checkGasLevel() {
+  int gasValue = analogRead(mqPin); 
+
+  Blynk.virtualWrite(V0, gasValue); // Kirim nilai analog ke Gauge/Chart di Blynk
+  
+  if (gasValue > batasGas) { 
+    digitalWrite(ledPin, HIGH);    // LED menyala tanda bahaya
+    Blynk.virtualWrite(V1, 255);   // Kirim sinyal ke Widget LED Blynk (255 = nyala)
+  } else {
+    digitalWrite(ledPin, LOW);     // LED mati tanda aman
+    Blynk.virtualWrite(V1, 0);     // Kirim sinyal ke Widget LED Blynk (0 = mati)
+  }
+}
+
+void setup() {
+  pinMode(ledPin, OUTPUT);
+  Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass);
+  timer.setInterval(1000L, checkGasLevel);
+}
+
+void loop() {
+  Blynk.run();
+  timer.run();
+}
