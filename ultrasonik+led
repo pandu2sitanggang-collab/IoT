@@ -1,0 +1,74 @@
+#define BLYNK_TEMPLATE_ID "TMPLxxxx"
+#define BLYNK_TEMPLATE_NAME "Ultrasonik LED"
+#define BLYNK_AUTH_TOKEN "IsiAuthToken"
+
+#include <ESP8266WiFi.h>
+#include <BlynkSimpleEsp8266.h>
+
+char ssid[] = "NamaWifi";
+char pass[] = "PasswordWifi";
+
+#define TRIG_PIN D5
+#define ECHO_PIN D6
+#define LED_PIN D7
+
+BlynkTimer timer;
+
+void sendSensor() {
+
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(2);
+
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+
+  digitalWrite(TRIG_PIN, LOW);
+
+  long duration = pulseIn(ECHO_PIN, HIGH);
+
+  float distance = duration * 0.034 / 2;
+
+  Serial.print("Jarak: ");
+  Serial.print(distance);
+  Serial.println(" cm");
+
+  Blynk.virtualWrite(V0, distance);
+
+  if (distance < 10) {
+
+    digitalWrite(LED_PIN, HIGH);
+
+    Blynk.virtualWrite(V1, "LED ON");
+
+    Serial.println("LED Menyala");
+  }
+
+  else {
+
+    digitalWrite(LED_PIN, LOW);
+
+    Blynk.virtualWrite(V1, "LED OFF");
+
+    Serial.println("LED Mati");
+  }
+}
+
+void setup() {
+
+  Serial.begin(115200);
+
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
+
+  pinMode(LED_PIN, OUTPUT);
+
+  Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass);
+
+  timer.setInterval(1000L, sendSensor);
+}
+
+void loop() {
+
+  Blynk.run();
+  timer.run();
+}
