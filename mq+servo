@@ -1,0 +1,61 @@
+#define BLYNK_TEMPLATE_ID "TMPLxxxxxx"
+#define BLYNK_DEVICE_NAME "Smart Ventilator"
+#define BLYNK_AUTH_TOKEN "Token_Blynk_Kamu"
+
+#define BLYNK_PRINT Serial
+
+#include <ESP8266WiFi.h>
+#include <BlynkSimpleEsp8266.h>
+#include <Servo.h>
+
+char ssid[] = "Nama_WiFi";
+char pass[] = "Password_WiFi";
+
+const int mqPin = A0;    // Pin Analog untuk Sensor MQ
+const int servoPin = 14; // Pin D5 untuk Servo
+
+Servo myServo;
+BlynkTimer timer;
+
+// Tentukan batas nilai gas di mana servo akan bergerak
+// Angka ini mungkin perlu kamu sesuaikan saat praktik
+const int batasGas = 400; 
+
+void checkGasLevel() {
+  // Membaca nilai analog dari sensor MQ (0 - 1024)
+  int gasValue = analogRead(mqPin); 
+
+  // Kirim data ke Blynk
+  Blynk.virtualWrite(V0, gasValue);
+  
+  Serial.print("Kadar Gas/Asap: ");
+  Serial.println(gasValue);
+
+  // Logika servo
+  if (gasValue > batasGas) { 
+    // Jika gas/asap terdeteksi melebihi batas
+    myServo.write(90); // Buka ventilasi / putar katup
+    Blynk.virtualWrite(V1, 90);
+  } else {
+    // Jika udara normal
+    myServo.write(0); // Tutup ventilasi
+    Blynk.virtualWrite(V1, 0);
+  }
+}
+
+void setup() {
+  Serial.begin(115200);
+  
+  myServo.attach(servoPin);
+  myServo.write(0); // Tutup di awal
+
+  Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass);
+
+  // Baca gas setiap 1 detik
+  timer.setInterval(1000L, checkGasLevel);
+}
+
+void loop() {
+  Blynk.run();
+  timer.run();
+}
